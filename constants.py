@@ -2,7 +2,7 @@ import os
 
 
 DATASET_DESTINATION = os.getcwd() + '/data'
-TRAIN = '/train-clean-100/LibriSpeech/train-clean-100'
+TRAIN = '/LibriSpeech/train-clean-100'
 TEST = '/LibriSpeech/test-clean'
 PREPROCESSED_TEST = '/preprocessed/mfcc/test'
 PREPROCESSED_TRAIN = '/preprocessed/mfcc/train'

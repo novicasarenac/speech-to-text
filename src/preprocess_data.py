@@ -37,6 +37,7 @@ def preprocess_data(path, files_destination, labels_destination):
 
     labels_df = pd.DataFrame(columns=['file', 'label'])
     files_num = len(wave_files)
+
     for i, (wave_file, label) in enumerate(zip(wave_files, encoded_labels)):
         wave_file_name = wave_file.split('/')[-1]
         mfcc_file_path = files_destination + wave_file_name.split('.')[0] + '.npy'
@@ -49,24 +50,27 @@ def preprocess_data(path, files_destination, labels_destination):
 
         # save filename and encoded label
         labels_df.loc[i] = [wave_file_name, label]
-    labels_df.to_csv(labels_destination, sep=',')
+
+    labels_df.to_csv(labels_destination,
+                     sep='\t',
+                     index=False)
 
 
 def run_preprocessing():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--test', required = False, help='Preprocessing test set')
-    ap.add_argument('--training', required = False, help='Preprocessing training set')
+    ap.add_argument('--test', required=False, help='Preprocessing test set')
+    ap.add_argument('--training', required=False, help='Preprocessing training set')
     args = vars(ap.parse_args())
     if args['test']:
         path = DATASET_DESTINATION + TEST
-        files_destination = DATASET_DESTINATION + PREPROCESSED_TEST + '/'
+        feature_destination = DATASET_DESTINATION + PREPROCESSED_TEST
         labels_destination = DATASET_DESTINATION + LABELS_TEST
-        preprocess_data(path, files_destination, labels_destination)
+        preprocess_data(path, feature_destination, labels_destination)
     if args['training']:
         path = DATASET_DESTINATION + TRAIN
-        files_destination = DATASET_DESTINATION + PREPROCESSED_TRAIN + '/'
+        feature_destination = DATASET_DESTINATION + PREPROCESSED_TRAIN
         labels_destination = DATASET_DESTINATION + LABELS_TRAIN
-        preprocess_data(path, files_destination, labels_destination)
+        preprocess_data(path, feature_destination, labels_destination)
 
 
 if __name__ == '__main__':

@@ -1,19 +1,18 @@
-import sys
+import os
 import argparse
 import librosa
-import soundfile as sf
 import numpy as np
-import os
-import csv
 import pandas as pd
-from constants import *
+import soundfile as sf
+
+from definitions import *
 from encoding import make_encodings, encode
 
 
 def preprocess_data(path, files_destination, labels_destination):
     letter2ind = make_encodings()
     os.makedirs(os.path.dirname(files_destination), exist_ok=True)
-    
+
     wave_files = []
     encoded_labels = []
 
@@ -32,7 +31,7 @@ def preprocess_data(path, files_destination, labels_destination):
                     content = line.strip()
                     file, label = content.split(' ', 1)
                     file_path = speech_dir + '/' + file + '.flac'
-                    
+
                     wave_files.append(file_path)
                     encoded_labels.append(encode(label, letter2ind))
 
@@ -41,7 +40,7 @@ def preprocess_data(path, files_destination, labels_destination):
     for i, (wave_file, label) in enumerate(zip(wave_files, encoded_labels)):
         wave_file_name = wave_file.split('/')[-1]
         mfcc_file_path = files_destination + wave_file_name.split('.')[0] + '.npy'
-        
+
         print('{}/{}\t{}'.format(i, files_num, wave_file_name))
         wave, sr = sf.read(wave_file)
         mfcc = librosa.feature.mfcc(wave, sr=sr)
@@ -51,7 +50,7 @@ def preprocess_data(path, files_destination, labels_destination):
         # save filename and encoded label
         labels_df.loc[i] = [wave_file_name, label]
     labels_df.to_csv(labels_destination, sep=',')
- 
+
 
 def run_preprocessing():
     ap = argparse.ArgumentParser()

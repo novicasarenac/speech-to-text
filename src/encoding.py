@@ -1,5 +1,5 @@
 import string
-from constants import letters
+from definitions import letters
 
 
 def make_encodings():

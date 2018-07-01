@@ -1,24 +1,35 @@
 import os
+import sys
 import argparse
 import librosa
 import numpy as np
 import pandas as pd
 import soundfile as sf
 
-from definitions import *
 from encoding import make_encodings, encode
+from python_speech_features import base
+from definitions import *
 
 
-def preprocess_data(path, files_destination, labels_destination):
-    letter2ind = make_encodings()
+def preprocess_data(data_path, files_destination, labels_destination, mfcc_type):
+    wave_files, encoded_labels = read_data_files(data_path, files_destination)
+    extract_mfcc(wave_files,
+                 encoded_labels,
+                 files_destination,
+                 labels_destination,
+                 mfcc_type)
+
+
+def read_data_files(data_path, files_destination):
+    letter_indices = make_encodings()
     os.makedirs(os.path.dirname(files_destination), exist_ok=True)
 
     wave_files = []
     encoded_labels = []
 
-    reader_dirs = os.listdir(path)
+    reader_dirs = os.listdir(data_path)
     for reader_dir in reader_dirs:
-        chapters_path = path + '/' + reader_dir
+        chapters_path = data_path + '/' + reader_dir
         chapter_dirs = os.listdir(chapters_path)
         for chapter_dir in chapter_dirs:
             speech_dir = chapters_path + '/' + chapter_dir
@@ -33,8 +44,12 @@ def preprocess_data(path, files_destination, labels_destination):
                     file_path = speech_dir + '/' + file + '.flac'
 
                     wave_files.append(file_path)
-                    encoded_labels.append(encode(label, letter2ind))
+                    encoded_labels.append(encode(label, letter_indices))
 
+    return wave_files, encoded_labels
+
+
+def extract_mfcc(wave_files, encoded_labels, files_destination, labels_destination, mfcc_type):
     labels_df = pd.DataFrame(columns=['file', 'label'])
     files_num = len(wave_files)
 
@@ -42,13 +57,17 @@ def preprocess_data(path, files_destination, labels_destination):
         wave_file_name = wave_file.split('/')[-1]
         mfcc_file_path = files_destination + wave_file_name.split('.')[0] + '.npy'
 
-        print('{}/{}\t{}'.format(i, files_num, wave_file_name))
-        wave, sr = sf.read(wave_file)
-        mfcc = librosa.feature.mfcc(wave, sr=sr)
+        print('{}/{}\t{}'.format(i + 1, files_num, wave_file_name))
+        wave_data, sample_rate = sf.read(wave_file)
         # save mfcc
-        np.save(mfcc_file_path, mfcc, allow_pickle=False)
+        if mfcc_type == 'cnn':
+            mfcc = librosa.feature.mfcc(wave_data, sr=sample_rate)
+        elif mfcc_type == 'rnn':
+            mfcc = base.mfcc(wave_data,
+                             samplerate=sample_rate,
+                             winfunc=np.bartlett)
 
-        # save filename and encoded label
+        np.save(mfcc_file_path, mfcc, allow_pickle=False)
         labels_df.loc[i] = [wave_file_name, label]
 
     labels_df.to_csv(labels_destination,
@@ -58,19 +77,52 @@ def preprocess_data(path, files_destination, labels_destination):
 
 def run_preprocessing():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--test', required=False, help='Preprocessing test set')
-    ap.add_argument('--training', required=False, help='Preprocessing training set')
-    args = vars(ap.parse_args())
-    if args['test']:
-        path = DATASET_DESTINATION + TEST
-        feature_destination = DATASET_DESTINATION + PREPROCESSED_TEST
+    ap.add_argument('--test',
+                    nargs=1,
+                    type=str,
+                    required=False,
+                    help='Preprocessing test set. Params: \'cnn\' | \'rnn\'')
+
+    ap.add_argument('--training',
+                    nargs=1,
+                    type=str,
+                    required=False,
+                    help='Preprocessing training set. Params: \'cnn\' | \'rnn\'')
+
+    args = ap.parse_args()
+    if args.test is None and args.training is None:
+        print("Unknown argument. Check help for valid options.")
+        sys.exit(1)
+
+    if args.test:
+        mfcc_type = args.test[0]
+        if args.test[0] == 'cnn':
+            feature_destination = DATASET_DESTINATION + PREPROCESSED_CNN_TEST
+        elif args.test[0] == 'rnn':
+            feature_destination = DATASET_DESTINATION + PREPROCESSED_RNN_TEST
+        else:
+            print('Unknown parameter. Exiting...')
+            sys.exit(1)
+
+        data_path = DATASET_DESTINATION + TEST
         labels_destination = DATASET_DESTINATION + LABELS_TEST
-        preprocess_data(path, feature_destination, labels_destination)
-    if args['training']:
-        path = DATASET_DESTINATION + TRAIN
-        feature_destination = DATASET_DESTINATION + PREPROCESSED_TRAIN
+    if args.training:
+        mfcc_type = args.training[0]
+        if args.training[0] == 'cnn':
+            feature_destination = DATASET_DESTINATION + PREPROCESSED_CNN_TRAIN
+        elif args.training[0] == 'rnn':
+            feature_destination = DATASET_DESTINATION + PREPROCESSED_RNN_TRAIN
+        else:
+            print('Unknown parameter. Exiting...')
+            sys.exit(1)
+
+        data_path = DATASET_DESTINATION + TRAIN
         labels_destination = DATASET_DESTINATION + LABELS_TRAIN
-        preprocess_data(path, feature_destination, labels_destination)
+
+    preprocess_data(data_path,
+                    feature_destination,
+                    labels_destination,
+                    mfcc_type)
 
 
 if __name__ == '__main__':

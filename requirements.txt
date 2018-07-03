@@ -3,3 +3,5 @@ soundfile
 librosa
 pandas
 python_speech_features
+torch
+torchvision

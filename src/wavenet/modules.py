@@ -125,6 +125,15 @@ class ResidualBlock(torch.nn.Module):
 
 
 class ResidualStack(torch.nn.Module):
+    """Residual stack implementation. It consists of residual blocks.
+
+    Attributes:
+        stack_len (int): Number of layers in residual stack
+        dilations_per_layer (int): Number of dilations (residual blocks) per layer in residual stack
+        res_layers_num (int): number of both input and output channels in single residual block
+        skip_layers_num (int): number of output layers in skip connection in single residual block
+        res_stack (list): List of residual blocks
+    """
     def __init__(self, stack_len, dilations_per_layer, res_layers_num,
                  skip_layers_num):
         """Initialize residual stack.
@@ -145,6 +154,11 @@ class ResidualStack(torch.nn.Module):
         self.res_stack = initialize_res_stack()
 
     def initialize_res_stack(self):
+        """Residual stack initialization. Makes residual blocks.
+
+        Returns:
+            List of residual blocks.
+        """
         residual_blocks = []
         dilations = []
         for layer_ind in range(0, self.stack_len):
@@ -156,8 +170,36 @@ class ResidualStack(torch.nn.Module):
         return residual_blocks
     
     def _make_residual_block(self, dilation):
-        residual_block = ResidualBlock(self.res_layers_num, self.skip_layers_num, dilation)
-        # TODO
+        """Makes single residual block.
+
+        Args:
+            dilation (int): value of dilation param.
+        
+        Returns:
+            Single residual block.
+        """
+        residual_block = ResidualBlock(self.res_layers_num,
+                                       self.skip_layers_num, dilation)
+        return residual_block
+    
+    def forward(self, x, skip_size):
+        """Forward pass of residual stack.
+
+        Args:
+            x (tensor): input data
+            skip_size (int): size of output data at skip connection output
+        
+        Returns:
+            Stacked skip connections.
+        """
+        output = x
+        skip_connections = []
+
+        for block in self.res_stack:
+            output, skip_connection_output = block(output, skip_size)
+            skip_connections.append(skip_connection_output)
+        
+        return torch.stack(skip_connections)
 
 
 if __name__ == '__main__':

@@ -202,6 +202,48 @@ class ResidualStack(torch.nn.Module):
         return torch.stack(skip_connections)
 
 
+class SoftmaxLayer(torch.nn.Module):
+    """Dense module of the Wavenet.
+
+    Attributes:
+        conv1 (torch.nn.Conv1d): 1d Convolution step
+        conv2 (torch.nn.Conv1d): 1d Convolution step
+        relu (torch.nn.ReLU): ReLU activation function layer
+        softmax (torch.nn.Softmax): Softmax activation function layer
+    """
+    def __init__(self, channels_num):
+        """Initializes dense module.
+
+        Args:
+            channels_num (int): Number of both input and output channels at convolutional
+                                layers. It must be the same number as skip_layers_num at ResidualBlock.
+        """
+        super(SoftmaxLayer, self).__init__()
+        
+        self.conv1 = torch.nn.Conv1d(channels_num, channels_num, 1)
+        self.conv2 = torch.nn.Conv1d(channels_num, channels_num, 1)
+        self.relu = torch.nn.ReLU()
+        self.softmax = torch.nn.Softmax(dim=1)
+    
+    def forward(self, x):
+        """Forward pass of dense module.
+
+        Args:
+            x (tensor): input data
+        
+        Returns:
+            Output of softmax layer.
+        """
+        skip_connections_sum = torch.sum(x, dim=0)
+        relu1_out = self.relu(skip_connections_sum)
+        conv1_out = self.conv1(relu1_out)
+        relu2_out = self.relu(conv1_out)
+        conv2_out = self.conv2(relu2_out)
+        output = self.softmax(conv2_out)
+
+        return output
+
+
 if __name__ == '__main__':
     inp = torch.randn(1, 20, 155)
     causal_conv = CausalConvolution1D(20, 100)

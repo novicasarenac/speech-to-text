@@ -81,7 +81,7 @@ class ResidualBlock(torch.nn.Module):
         """Initializes residual block
 
         Args:
-            res_layers_num (int): number of both input and output channels in residual layer
+            res_layers_num (int): number of both input and output channels in residual block
             skip_layers_num (int): number of output layers in skip connection
             dilation (int): value of the dilation param
         """
@@ -122,6 +122,42 @@ class ResidualBlock(torch.nn.Module):
         skip_connection_output = skip_connection[:, :, -skip_size:]
 
         return output, skip_connection_output
+
+
+class ResidualStack(torch.nn.Module):
+    def __init__(self, stack_len, dilations_per_layer, res_layers_num,
+                 skip_layers_num):
+        """Initialize residual stack.
+
+        Args:
+            stack_len (int): Number of layers in residual stack
+            dilations_per_layer (int): Number of dilations (residual blocks) per layer in residual stack
+            res_layers_num (int): number of both input and output channels in single residual block
+            skip_layers_num (int): number of output layers in skip connection in single residual block
+        """
+        super(ResidualStack, self).__init__()
+
+        self.stack_len = stack_len
+        self.dilations_per_layer = dilations_per_layer
+        self.res_layers_num = res_layers_num
+        self.skip_layers_num = skip_layers_num
+        
+        self.res_stack = initialize_res_stack()
+
+    def initialize_res_stack(self):
+        residual_blocks = []
+        dilations = []
+        for layer_ind in range(0, self.stack_len):
+            dilations.extend([2 ** dilation_ind for dilation_ind in range(0, self.dilations_per_layer)])
+        
+        for dilation in dilations:
+            residual_blocks.append(self._make_residual_block(dilation))
+        
+        return residual_blocks
+    
+    def _make_residual_block(self, dilation):
+        residual_block = ResidualBlock(self.res_layers_num, self.skip_layers_num, dilation)
+        # TODO
 
 
 if __name__ == '__main__':

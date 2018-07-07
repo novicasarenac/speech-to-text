@@ -4,10 +4,13 @@ import torch.optim as optim
 from src.rnn_ctc.dataset_loader import DatasetLoader
 from src.rnn_ctc.rnn_module import RNNModule
 from warpctc_pytorch import CTCLoss
+
+from src.definitions import MODEL_DESTINATION
 from src.definitions import DATASET_DESTINATION
 from src.definitions import LABELS_TRAIN
 from src.definitions import PREPROCESSED_RNN_TRAIN
 
+RNN_WEIGHTS = '/rnn_weights.pth'
 
 class RNNTrainer():
     def __init__(self, args):
@@ -30,20 +33,17 @@ class RNNTrainer():
         adam = optim.Adam(model.parameters())
 
         print("Starting training..")
-        for epoch in self.num_epoches:
+        for epoch in range(self.num_epoches):
             loss_acc = 0
-            for sample in self.data_loader.__len__():
-                adam.zero_grads()
+            for sample in range(self.data_loader.__len__()):
+                adam.zero_grad()
                 features, labels = self.data_loader.__getitem__(sample)
                 labels_size = torch.IntTensor([labels.shape[0]])
-                features_size = torch.IntTensor([features.shape[2]])
+                features_size = torch.IntTensor([features.shape[0]])
 
                 # place data on gpu
                 features.to(self.device)
                 labels.to(self.device)
-
-                # compute gradients with autograd
-                features.require_grad(True)
 
                 output = model(features, self.device)
                 loss = ctc_loss(output, labels, features_size, labels_size)
@@ -51,12 +51,21 @@ class RNNTrainer():
                 loss.backward()
                 adam.step()
                 # accumulate loss
-                loss_acc += loss
-                if sample % 100 == 0:
+                loss_acc += loss.data[0]
+                if sample + 1 % 100 == 0:
                     print("Training example {} -- Loss: {:.4f}".format(sample + 1, loss_acc/(sample + 1)))
 
             print("Epoch: {} ---> Mean loss: {:.4f}".format(epoch + 1, loss_acc/self.data_loader.__len__()))
+        torch.save(model.state_dict(), MODEL_DESTINATION + RNN_WEIGHTS)
         print("Training finished..")
+        return model
+
+    def evaluate(self, model):
+        pass
+
+
+    def inference(self, model):
+        pass
 
 
 if __name__ == "__main__":

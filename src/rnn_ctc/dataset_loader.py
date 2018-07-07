@@ -22,15 +22,7 @@ class DatasetLoader(Dataset):
         return max(list(map(lambda label: len(label), self.labels)))
 
     def __getitem__(self, index):
-        label = self.labels[index]
-
-        labels = torch.from_numpy(self._pad_label_sequence(label, self.max_label_length()))
+        labels = torch.from_numpy(self.labels[index])
         mfcc = torch.from_numpy(np.load(self.features[index], allow_pickle=False)).unsqueeze_(1)
 
-        return mfcc, labels
-
-    def _pad_label_sequence(self, label, max_size):
-        if len(label) < max_size:
-            return np.pad(label, (0, max_size - len(label)), mode='constant')
-        else:
-            return label
+        return mfcc.type(torch.cuda.FloatTensor), labels.type(torch.IntTensor)

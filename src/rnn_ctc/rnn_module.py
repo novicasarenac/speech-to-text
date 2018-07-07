@@ -19,7 +19,7 @@ class RNNModule(nn.Module):
         return out
 
     def init_states(self, batch_size, device):
-        h0 = torch.zeros(self.num_layers * 2, BATCH_SIZE, self.hidden_units, device=device)
-        c0 = torch.zeros(self.num_layers * 2, BATCH_SIZE, self.hidden_units, device=device)
+        h0 = torch.zeros(self.num_layers * 2, batch_size, self.hidden_units, device=device)
+        c0 = torch.zeros(self.num_layers * 2, batch_size, self.hidden_units, device=device)
 
         return h0, c0

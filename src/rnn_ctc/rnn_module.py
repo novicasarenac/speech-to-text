@@ -1,12 +1,6 @@
 import torch
 import torch.nn as nn
 
-BATCH_SIZE = 1
-HIDDEN_UNITS = 512
-NUM_LAYERS = 1
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
 class RNNModule(nn.Module):
     def __init__(self, input_size, num_layers, hidden_units, dropout=0):
@@ -19,12 +13,12 @@ class RNNModule(nn.Module):
                             bidirectional=True,
                             dropout=dropout)
 
-    def forward(self, input_tensor):
-        h0, c0 = self.init_states()
+    def forward(self, input_tensor, device):
+        h0, c0 = self.init_states(input_tensor.shape[1], device)
         out, _ = self.lstm(input_tensor, (h0, c0))
         return out
 
-    def init_states(self):
+    def init_states(self, batch_size, device):
         h0 = torch.zeros(self.num_layers * 2, BATCH_SIZE, self.hidden_units, device=device)
         c0 = torch.zeros(self.num_layers * 2, BATCH_SIZE, self.hidden_units, device=device)
 

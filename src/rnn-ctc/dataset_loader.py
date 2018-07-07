@@ -3,9 +3,6 @@ import pandas as pd
 import numpy as np
 
 from torch.utils.data import Dataset
-from src.definitions import LABELS_TRAIN
-from src.definitions import PREPROCESSED_RNN_TRAIN
-from src.definitions import DATASET_DESTINATION
 
 
 class DatasetLoader(Dataset):
@@ -21,19 +18,19 @@ class DatasetLoader(Dataset):
     def __len__(self):
         return len(self.features)
 
+    def max_label_length(self):
+        return max(list(map(lambda label: len(label), self.labels)))
+
     def __getitem__(self, index):
-        labels = torch.from_numpy(self.labels[index])
-        mfcc = torch.from_numpy(np.load(self.features[index],
-                                        allow_pickle=False))
-                    .unsqueeze_(1)
+        label = self.labels[index]
+
+        labels = torch.from_numpy(self._pad_label_sequence(label, self.max_label_length()))
+        mfcc = torch.from_numpy(np.load(self.features[index], allow_pickle=False)).unsqueeze_(1)
 
         return mfcc, labels
 
-
-if __name__ == "__main__":
-    labels_path = DATASET_DESTINATION + LABELS_TRAIN
-    features_path = DATASET_DESTINATION + PREPROCESSED_RNN_TRAIN
-    loader = DatasetLoader(labels_path, features_path)
-
-    mfcc, label = loader[3]
-    print(mfcc.shape)
+    def _pad_label_sequence(self, label, max_size):
+        if len(label) < max_size:
+            return np.pad(label, (0, max_size - len(label)), mode='constant')
+        else:
+            return label

@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import torch.optim as optim
 
 from src.rnn_ctc.dataset_loader import DatasetLoader
@@ -20,12 +21,15 @@ class RNNTrainer():
         self.input_size = args['input_size']
         self.num_layers = args['num_layers']
         self.hidden_units = args['hidden_units']
+        self.vocabulary_size = args['vocab_size']
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def train(self):
         # init model
-        model = RNNModule(self.input_size, self.num_layers, self.hidden_units)
-        model.to(self.device)
+        model = RNNModule(self.input_size,
+                          self.num_layers,
+                          self.hidden_units,
+                          self.vocabulary_size).to(self.device)
 
         # define ctc loss function
         ctc_loss = CTCLoss(length_average=True)
@@ -63,8 +67,7 @@ class RNNTrainer():
     def evaluate(self, model):
         pass
 
-
-    def inference(self, model):
+    def inference(self, output, true_label):
         pass
 
 
@@ -73,6 +76,7 @@ if __name__ == "__main__":
         "num_epoches": 1,
         "labels_path": DATASET_DESTINATION + LABELS_TRAIN,
         "features_path": DATASET_DESTINATION + PREPROCESSED_RNN_TRAIN,
+        "vocab_size": 28,
         "input_size": 13,
         "num_layers": 1,
         "hidden_units": 512

@@ -20,5 +20,14 @@ def encode(text, letter2ind):
 
 
 def decode(encoded_letters, letter2ind):
-    # TODO
-    print('a')
+    sentence = []
+    for letter_ind in encoded_letters:
+        sentence.append(find_char_by_index(letter_ind, letter2ind))
+
+    return ''.join(sentence)
+
+
+def find_char_by_index(letter_index, letter2ind):
+    for key, value in letter2ind:
+        if value == letter_index and value != 0:
+            return key

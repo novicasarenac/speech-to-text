@@ -65,9 +65,25 @@ def extract_mfcc(wave_files, encoded_labels, files_destination, labels_destinati
         elif mfcc_type == 'rnn':
             mfcc = base.mfcc(wave_data,
                              samplerate=sample_rate,
-                             winfunc=np.bartlett)
+                             numcep=13,
+                             winstep=0.01,
+                             winfunc=np.hamming)
+            deltas = base.delta(mfcc, 2)
 
-        np.save(mfcc_file_path, mfcc, allow_pickle=False)
+            # normalize mfcc over all frames
+            mfcc_mean = np.mean(mfcc, axis=0)
+            mfcc_std = np.std(mfcc, axis=0)
+            mfcc = (mfcc - mfcc_mean)/mfcc_std
+
+            # normalize deltas over all frames
+            delta_mean = np.mean(deltas, axis=0)
+            delta_std = np.std(deltas, axis=0)
+            deltas = (deltas - delta_mean)/delta_std
+
+        np.save(mfcc_file_path,
+                np.concatenate((mfcc, deltas), axis=1),
+                allow_pickle=False)
+
         labels_df.loc[i] = [wave_file_name, label]
 
     labels_df.to_csv(labels_destination,

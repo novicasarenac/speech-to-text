@@ -18,11 +18,8 @@ class DatasetLoader(Dataset):
     def __len__(self):
         return len(self.features)
 
-    def max_label_length(self):
-        return max(list(map(lambda label: len(label), self.labels)))
-
     def __getitem__(self, index):
         labels = torch.from_numpy(self.labels[index])
-        mfcc = torch.from_numpy(np.load(self.features[index], allow_pickle=False)).unsqueeze_(1)
+        mfcc = torch.from_numpy(np.load(self.features[index], allow_pickle=False)).unsqueeze(1)
 
         return mfcc.type(torch.cuda.FloatTensor), labels.type(torch.IntTensor)

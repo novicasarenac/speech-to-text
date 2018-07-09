@@ -88,11 +88,11 @@ class ResidualBlock(torch.nn.Module):
         super(ResidualBlock, self).__init__()
 
         self.dilated_convolution = DilatedConvolution1D(res_layers_num,
-                                                        dilation)
+                                                        dilation).cuda()
         self.residual_output_convolution = torch.nn.Conv1d(res_layers_num,
-                                                           res_layers_num, 1)
+                                                           res_layers_num, 1).cuda()
         self.skip_connection_convolution = torch.nn.Conv1d(res_layers_num,
-                                                           skip_layers_num, 1)
+                                                           skip_layers_num, 1).cuda()
         self.tanh = torch.nn.Tanh()
         self.sigmoid = torch.nn.Sigmoid()
     
@@ -151,9 +151,9 @@ class ResidualStack(torch.nn.Module):
         self.res_layers_num = res_layers_num
         self.skip_layers_num = skip_layers_num
         
-        self.res_stack = initialize_res_stack()
+        self.res_stack = self._initialize_res_stack()
 
-    def initialize_res_stack(self):
+    def _initialize_res_stack(self):
         """Residual stack initialization. Makes residual blocks.
 
         Returns:
@@ -211,17 +211,18 @@ class SoftmaxLayer(torch.nn.Module):
         relu (torch.nn.ReLU): ReLU activation function layer
         softmax (torch.nn.Softmax): Softmax activation function layer
     """
-    def __init__(self, channels_num):
+    def __init__(self, channels_num, softmax_output):
         """Initializes dense module.
 
         Args:
             channels_num (int): Number of both input and output channels at convolutional
                                 layers. It must be the same number as skip_layers_num at ResidualBlock.
+            softmax_output (int): size of softmax output (vocabulary length)
         """
         super(SoftmaxLayer, self).__init__()
         
         self.conv1 = torch.nn.Conv1d(channels_num, channels_num, 1)
-        self.conv2 = torch.nn.Conv1d(channels_num, channels_num, 1)
+        self.conv2 = torch.nn.Conv1d(channels_num, softmax_output, 1)
         self.relu = torch.nn.ReLU()
         self.softmax = torch.nn.Softmax(dim=1)
     

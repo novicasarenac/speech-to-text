@@ -19,7 +19,7 @@ class SpeechDataLoader(DataLoader):
         freq_size = longest_sample.size(0)
         batch_size = len(batch)
         
-        inputs = torch.zeros(batch_size, 1, freq_size, max_sample_length)
+        inputs = torch.zeros(batch_size, freq_size, max_sample_length)
         input_percentages = torch.FloatTensor(batch_size)
         target_sizes = torch.IntTensor(batch_size)
         targets = []
@@ -28,7 +28,7 @@ class SpeechDataLoader(DataLoader):
             tensor = sample[0]
             transcription = sample[1]
             seq_length = tensor.size(1)
-            inputs[i][0].narrow(1, 0, seq_length).copy_(tensor)
+            inputs[i].narrow(1, 0, seq_length).copy_(tensor)
             input_percentages[i] = seq_length / float(max_sample_length)
             target_sizes[i] = len(transcription)
             targets.extend(transcription)

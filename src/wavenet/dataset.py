@@ -25,6 +25,11 @@ class SpeechDataset(Dataset):
         mfcc = np.load(file_path, allow_pickle=False)
         mfcc_tensor = torch.FloatTensor(mfcc)
 
+        mean = mfcc_tensor.mean()
+        std = mfcc_tensor.std()
+        mfcc_tensor.add_(-mean)
+        mfcc_tensor.div_(std)
+
         return mfcc_tensor, label
 
 

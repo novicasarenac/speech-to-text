@@ -32,3 +32,4 @@ def find_char_by_index(letter_index, letter2ind):
     for key, value in letter2ind.items():
         if value == letter_index:
                 return key
+

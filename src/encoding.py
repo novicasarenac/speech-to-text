@@ -1,5 +1,5 @@
 import string
-from definitions import letters
+from src.definitions import letters
 
 
 def make_encodings():
@@ -20,5 +20,15 @@ def encode(text, letter2ind):
 
 
 def decode(encoded_letters, letter2ind):
-    # TODO
-    print('a')
+    sentence = []
+    for letter_ind in encoded_letters:
+        if letter_ind != 0:
+            sentence.append(find_char_by_index(letter_ind, letter2ind))
+
+    return ''.join(sentence)
+
+
+def find_char_by_index(letter_index, letter2ind):
+    for key, value in letter2ind.items():
+        if value == letter_index:
+                return key

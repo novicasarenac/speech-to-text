@@ -2,4 +2,6 @@
 .vscode
 **/*.pyc
 data/*
+models/*
+!data/.gitkeep
 !data/.gitkeep
